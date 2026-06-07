@@ -5,6 +5,8 @@ import (
 	"os"
 	"regexp"
 	"strings"
+
+	"github.com/ayoub3bidi/solar-commons/internal/apperrors"
 )
 
 var templateVarPattern = regexp.MustCompile(`\{\{\.[A-Za-z_][A-Za-z0-9_]*\}\}`)
@@ -60,7 +62,7 @@ func ResolveVars(s string, vars map[string]string) (string, error) {
 		return value
 	})
 	if len(missing) > 0 {
-		return "", fmt.Errorf("missing variable values: %s", strings.Join(missing, ", "))
+		return "", fmt.Errorf("%w: missing variable values: %s", apperrors.ErrMissingVariable, strings.Join(missing, ", "))
 	}
 	return out, nil
 }

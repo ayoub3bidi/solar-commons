@@ -4,14 +4,16 @@ import (
 	"fmt"
 	"path/filepath"
 	"strings"
+
+	"github.com/ayoub3bidi/solar-commons/internal/apperrors"
 )
 
 func SafeJoin(root, child string) (string, error) {
 	if child == "" {
-		return "", fmt.Errorf("path must not be empty")
+		return "", fmt.Errorf("%w: path must not be empty", apperrors.ErrUnsafePath)
 	}
 	if filepath.IsAbs(child) {
-		return "", fmt.Errorf("path %q must be relative", child)
+		return "", fmt.Errorf("%w: path %q must be relative", apperrors.ErrUnsafePath, child)
 	}
 
 	cleanRoot, err := filepath.Abs(root)
@@ -29,7 +31,7 @@ func SafeJoin(root, child string) (string, error) {
 		return "", fmt.Errorf("compare path %q with root: %w", child, err)
 	}
 	if rel == ".." || strings.HasPrefix(rel, ".."+string(filepath.Separator)) {
-		return "", fmt.Errorf("path %q escapes destination root", child)
+		return "", fmt.Errorf("%w: path %q escapes destination root", apperrors.ErrUnsafePath, child)
 	}
 
 	return cleanJoined, nil

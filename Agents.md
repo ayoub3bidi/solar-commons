@@ -50,6 +50,8 @@ PruneFeature(dest string, feature Feature) error
 InitGit(dest, message string) error
 ```
 
+Public sentinel errors are available for `errors.Is`: `ErrInvalidConfig`, `ErrDestinationExists`, `ErrInvalidManifest`, `ErrMissingVariable`, `ErrUnknownFeature`, and `ErrUnsafePath`.
+
 Callers are expected to build a config first, then run these operations in order. Do not make generation decisions inside this package.
 
 ## Manifest Rules

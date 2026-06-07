@@ -1,6 +1,7 @@
 package solarcommons
 
 import (
+	"errors"
 	"os"
 	"path/filepath"
 	"testing"
@@ -65,6 +66,44 @@ func TestScaffoldRejectsExistingDestination(t *testing.T) {
 	})
 	if err == nil {
 		t.Fatal("expected destination exists error")
+	}
+	if !errors.Is(err, ErrDestinationExists) {
+		t.Fatalf("error: got %v, want ErrDestinationExists", err)
+	}
+}
+
+func TestScaffoldErrorCategories(t *testing.T) {
+	tests := map[string]struct {
+		config ScaffoldConfig
+		target error
+	}{
+		"invalid config": {
+			config: ScaffoldConfig{},
+			target: ErrInvalidConfig,
+		},
+		"unknown feature": {
+			config: ScaffoldConfig{
+				Repo:             newScaffoldFixtureRepo(t),
+				Ref:              "v0.1.0",
+				Destination:      filepath.Join(t.TempDir(), "unknown-feature"),
+				Variables:        map[string]string{"project_name": "my-api", "app_title": "My API"},
+				DisabledFeatures: []string{"missing"},
+				InitialCommit:    "Initial scaffold",
+			},
+			target: ErrUnknownFeature,
+		},
+	}
+
+	for name, tt := range tests {
+		t.Run(name, func(t *testing.T) {
+			_, err := Scaffold(tt.config)
+			if err == nil {
+				t.Fatal("expected error")
+			}
+			if !errors.Is(err, tt.target) {
+				t.Fatalf("error: got %v, want %v", err, tt.target)
+			}
+		})
 	}
 }
 

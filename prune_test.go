@@ -1,6 +1,7 @@
 package solarcommons
 
 import (
+	"errors"
 	"os"
 	"path/filepath"
 	"strings"
@@ -64,5 +65,8 @@ func TestPruneFeatureRejectsEscapingPaths(t *testing.T) {
 	})
 	if err == nil {
 		t.Fatal("expected path traversal error")
+	}
+	if !errors.Is(err, ErrUnsafePath) {
+		t.Fatalf("error: got %v, want ErrUnsafePath", err)
 	}
 }

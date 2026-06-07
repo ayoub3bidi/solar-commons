@@ -1,6 +1,7 @@
 package solarcommons
 
 import (
+	"errors"
 	"os"
 	"path/filepath"
 	"strings"
@@ -63,6 +64,9 @@ func TestApplyRewritesRequiresVariableValues(t *testing.T) {
 	if err == nil {
 		t.Fatal("expected missing variable error")
 	}
+	if !errors.Is(err, ErrMissingVariable) {
+		t.Fatalf("error: got %v, want ErrMissingVariable", err)
+	}
 }
 
 func TestApplyRewritesRejectsEscapingPaths(t *testing.T) {
@@ -76,5 +80,8 @@ func TestApplyRewritesRejectsEscapingPaths(t *testing.T) {
 	}, nil)
 	if err == nil {
 		t.Fatal("expected path traversal error")
+	}
+	if !errors.Is(err, ErrUnsafePath) {
+		t.Fatalf("error: got %v, want ErrUnsafePath", err)
 	}
 }

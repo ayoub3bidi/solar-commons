@@ -5,6 +5,7 @@ import (
 	"os"
 	"time"
 
+	"github.com/ayoub3bidi/solar-commons/internal/apperrors"
 	gitops "github.com/ayoub3bidi/solar-commons/internal/git"
 )
 
@@ -44,7 +45,7 @@ func Scaffold(config ScaffoldConfig) (ScaffoldResult, error) {
 		return ScaffoldResult{}, err
 	}
 	if _, err := os.Stat(config.Destination); err == nil {
-		return ScaffoldResult{}, fmt.Errorf("destination already exists: %s", config.Destination)
+		return ScaffoldResult{}, fmt.Errorf("%w: %s", apperrors.ErrDestinationExists, config.Destination)
 	} else if !os.IsNotExist(err) {
 		return ScaffoldResult{}, fmt.Errorf("check destination %s: %w", config.Destination, err)
 	}
@@ -68,7 +69,7 @@ func Scaffold(config ScaffoldConfig) (ScaffoldResult, error) {
 	for _, featureName := range config.DisabledFeatures {
 		feature, ok := manifest.FeatureByName(featureName)
 		if !ok {
-			return ScaffoldResult{}, fmt.Errorf("unknown feature %q", featureName)
+			return ScaffoldResult{}, fmt.Errorf("%w: %q", apperrors.ErrUnknownFeature, featureName)
 		}
 		if err := PruneFeature(config.Destination, feature); err != nil {
 			return ScaffoldResult{}, err
@@ -110,13 +111,13 @@ func normalizeScaffoldConfig(config ScaffoldConfig) ScaffoldConfig {
 
 func validateScaffoldConfig(config ScaffoldConfig) error {
 	if config.Repo == "" {
-		return fmt.Errorf("repo must not be empty")
+		return fmt.Errorf("%w: repo must not be empty", apperrors.ErrInvalidConfig)
 	}
 	if config.Ref == "" {
-		return fmt.Errorf("ref must not be empty")
+		return fmt.Errorf("%w: ref must not be empty", apperrors.ErrInvalidConfig)
 	}
 	if config.Destination == "" {
-		return fmt.Errorf("destination must not be empty")
+		return fmt.Errorf("%w: destination must not be empty", apperrors.ErrInvalidConfig)
 	}
 	return nil
 }

@@ -1,6 +1,7 @@
 package solarcommons
 
 import (
+	"errors"
 	"testing"
 )
 
@@ -72,6 +73,8 @@ func TestManifestValidateRejectsInvalidManifests(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			if err := manifest.Validate(); err == nil {
 				t.Fatal("expected validation error")
+			} else if !errors.Is(err, ErrInvalidManifest) {
+				t.Fatalf("error: got %v, want ErrInvalidManifest", err)
 			}
 		})
 	}
