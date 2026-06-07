@@ -1,4 +1,4 @@
-package solarcommons
+package scaffold
 
 import (
 	"errors"
@@ -7,14 +7,17 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/ayoub3bidi/solar-commons/internal/apperrors"
+	"github.com/ayoub3bidi/solar-commons/internal/testutil"
+	"github.com/ayoub3bidi/solar-commons/internal/types"
 	"github.com/go-git/go-git/v5"
 )
 
-func TestScaffold(t *testing.T) {
-	source := newScaffoldFixtureRepo(t)
+func TestRun(t *testing.T) {
+	source := testutil.NewScaffoldFixtureRepo(t)
 	dest := filepath.Join(t.TempDir(), "my-api")
 
-	result, err := Scaffold(ScaffoldConfig{
+	result, err := Run(types.ScaffoldConfig{
 		Repo:        source,
 		Ref:         "v0.1.0",
 		Destination: dest,
@@ -74,7 +77,7 @@ func TestScaffold(t *testing.T) {
 	}
 
 	if _, err := os.Stat(filepath.Join(dest, ".git")); err != nil {
-		t.Fatal(".git should exist after Scaffold")
+		t.Fatal(".git should exist after Run")
 	}
 
 	repo, err := git.PlainOpen(dest)
@@ -97,9 +100,9 @@ func TestScaffold(t *testing.T) {
 	}
 }
 
-func TestScaffoldRejectsExistingDestination(t *testing.T) {
+func TestRunRejectsExistingDestination(t *testing.T) {
 	dest := t.TempDir()
-	_, err := Scaffold(ScaffoldConfig{
+	_, err := Run(types.ScaffoldConfig{
 		Repo:        "unused",
 		Ref:         "v0.1.0",
 		Destination: dest,
@@ -107,36 +110,36 @@ func TestScaffoldRejectsExistingDestination(t *testing.T) {
 	if err == nil {
 		t.Fatal("expected destination exists error")
 	}
-	if !errors.Is(err, ErrDestinationExists) {
+	if !errors.Is(err, apperrors.ErrDestinationExists) {
 		t.Fatalf("error: got %v, want ErrDestinationExists", err)
 	}
 }
 
-func TestScaffoldErrorCategories(t *testing.T) {
+func TestRunErrorCategories(t *testing.T) {
 	tests := map[string]struct {
-		config ScaffoldConfig
+		config types.ScaffoldConfig
 		target error
 	}{
 		"invalid config": {
-			config: ScaffoldConfig{},
-			target: ErrInvalidConfig,
+			config: types.ScaffoldConfig{},
+			target: apperrors.ErrInvalidConfig,
 		},
 		"unknown feature": {
-			config: ScaffoldConfig{
-				Repo:             newScaffoldFixtureRepo(t),
+			config: types.ScaffoldConfig{
+				Repo:             testutil.NewScaffoldFixtureRepo(t),
 				Ref:              "v0.1.0",
 				Destination:      filepath.Join(t.TempDir(), "unknown-feature"),
 				Variables:        map[string]string{"project_name": "my-api", "app_title": "My API"},
 				DisabledFeatures: []string{"missing"},
 				InitialCommit:    "Initial scaffold",
 			},
-			target: ErrUnknownFeature,
+			target: apperrors.ErrUnknownFeature,
 		},
 	}
 
 	for name, tt := range tests {
 		t.Run(name, func(t *testing.T) {
-			_, err := Scaffold(tt.config)
+			_, err := Run(tt.config)
 			if err == nil {
 				t.Fatal("expected error")
 			}
@@ -144,69 +147,5 @@ func TestScaffoldErrorCategories(t *testing.T) {
 				t.Fatalf("error: got %v, want %v", err, tt.target)
 			}
 		})
-	}
-}
-
-func newScaffoldFixtureRepo(t *testing.T) string {
-	t.Helper()
-
-	dir := t.TempDir()
-	copyFixtureTemplate(t, dir)
-
-	repo, err := git.PlainInit(dir, false)
-	if err != nil {
-		t.Fatal(err)
-	}
-	worktree, err := repo.Worktree()
-	if err != nil {
-		t.Fatal(err)
-	}
-	if err := worktree.AddGlob("."); err != nil {
-		t.Fatal(err)
-	}
-	hash, err := worktree.Commit("Initial fixture", defaultTestCommitOptions())
-	if err != nil {
-		t.Fatal(err)
-	}
-	if _, err := repo.CreateTag("v0.1.0", hash, nil); err != nil {
-		t.Fatal(err)
-	}
-	return dir
-}
-
-func copyFixtureTemplate(t *testing.T, dest string) {
-	t.Helper()
-
-	source := filepath.Join("internal", "fixtures", "template")
-	err := filepath.WalkDir(source, func(path string, entry os.DirEntry, err error) error {
-		if err != nil {
-			return err
-		}
-		relativePath, err := filepath.Rel(source, path)
-		if err != nil {
-			return err
-		}
-		if relativePath == "." {
-			return nil
-		}
-		target := filepath.Join(dest, relativePath)
-		if entry.IsDir() {
-			return os.MkdirAll(target, 0o755)
-		}
-		data, err := os.ReadFile(path)
-		if err != nil {
-			return err
-		}
-		info, err := entry.Info()
-		if err != nil {
-			return err
-		}
-		if err := os.MkdirAll(filepath.Dir(target), 0o755); err != nil {
-			return err
-		}
-		return os.WriteFile(target, data, info.Mode().Perm())
-	})
-	if err != nil {
-		t.Fatal(err)
 	}
 }

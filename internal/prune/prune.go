@@ -1,24 +1,17 @@
-package files
+package prune
 
 import (
 	"fmt"
 	"os"
 	"strings"
+
+	"github.com/ayoub3bidi/solar-commons/internal/fs"
+	"github.com/ayoub3bidi/solar-commons/internal/types"
 )
 
-type PruneFeature struct {
-	RemovePaths []string
-	RemoveLines []LineRemoval
-}
-
-type LineRemoval struct {
-	File    string
-	Pattern string
-}
-
-func Prune(dest string, feature PruneFeature) error {
+func Apply(dest string, feature types.Feature) error {
 	for _, p := range feature.RemovePaths {
-		path, err := SafeJoin(dest, p)
+		path, err := fs.SafeJoin(dest, p)
 		if err != nil {
 			return err
 		}
@@ -27,7 +20,7 @@ func Prune(dest string, feature PruneFeature) error {
 		}
 	}
 	for _, lineRemoval := range feature.RemoveLines {
-		path, err := SafeJoin(dest, lineRemoval.File)
+		path, err := fs.SafeJoin(dest, lineRemoval.File)
 		if err != nil {
 			return err
 		}

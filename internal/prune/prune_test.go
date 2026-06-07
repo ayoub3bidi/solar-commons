@@ -1,4 +1,4 @@
-package solarcommons
+package prune
 
 import (
 	"errors"
@@ -6,12 +6,14 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+
+	"github.com/ayoub3bidi/solar-commons/internal/apperrors"
+	"github.com/ayoub3bidi/solar-commons/internal/types"
 )
 
-func TestPruneFeature(t *testing.T) {
+func TestApply(t *testing.T) {
 	dir := t.TempDir()
 
-	// Create OIDC path subtree
 	oidcDir := filepath.Join(dir, "src", "routes", "oidc")
 	if err := os.MkdirAll(oidcDir, 0o755); err != nil {
 		t.Fatal(err)
@@ -20,7 +22,6 @@ func TestPruneFeature(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	// Create restful_ressources.py with mixed lines
 	resources := filepath.Join(dir, "src", "restful_ressources.py")
 	if err := os.MkdirAll(filepath.Dir(resources), 0o755); err != nil {
 		t.Fatal(err)
@@ -30,24 +31,22 @@ func TestPruneFeature(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	f := Feature{
+	feature := types.Feature{
 		Name:        "oidc",
 		RemovePaths: []string{"src/routes/oidc"},
-		RemoveLines: []LineRemoval{
+		RemoveLines: []types.LineRemoval{
 			{File: "src/restful_ressources.py", Pattern: "oidc"},
 		},
 	}
 
-	if err := PruneFeature(dir, f); err != nil {
+	if err := Apply(dir, feature); err != nil {
 		t.Fatal(err)
 	}
 
-	// OIDC dir must be gone
 	if _, err := os.Stat(oidcDir); !os.IsNotExist(err) {
 		t.Error("src/routes/oidc should be removed")
 	}
 
-	// OIDC lines must be gone, normal lines must remain
 	data, _ := os.ReadFile(resources)
 	got := string(data)
 	if strings.Contains(got, "oidc") {
@@ -58,15 +57,15 @@ func TestPruneFeature(t *testing.T) {
 	}
 }
 
-func TestPruneFeatureRejectsEscapingPaths(t *testing.T) {
-	err := PruneFeature(t.TempDir(), Feature{
+func TestApplyRejectsEscapingPaths(t *testing.T) {
+	err := Apply(t.TempDir(), types.Feature{
 		Name:        "unsafe",
 		RemovePaths: []string{"../outside"},
 	})
 	if err == nil {
 		t.Fatal("expected path traversal error")
 	}
-	if !errors.Is(err, ErrUnsafePath) {
+	if !errors.Is(err, apperrors.ErrUnsafePath) {
 		t.Fatalf("error: got %v, want ErrUnsafePath", err)
 	}
 }

@@ -1,4 +1,4 @@
-package solarcommons
+package rewrite
 
 import (
 	"errors"
@@ -6,9 +6,12 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+
+	"github.com/ayoub3bidi/solar-commons/internal/apperrors"
+	"github.com/ayoub3bidi/solar-commons/internal/types"
 )
 
-func TestApplyRewrites(t *testing.T) {
+func TestApply(t *testing.T) {
 	dir := t.TempDir()
 	envDist := filepath.Join(dir, ".env.dist")
 	original := "POSTGRES_HOST=mars_db\nPOSTGRES_USER=mars\nAPP_TITLE=\"Mars API Docs\"\n"
@@ -16,20 +19,16 @@ func TestApplyRewrites(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	m := Manifest{
-		Rewrites: []FileRewrite{
-			{
-				File: ".env.dist",
-				Replacements: []Replacement{
-					{From: "mars", To: "{{.project_name}}"},
-					{From: "Mars API Docs", To: "{{.app_title}}"},
-				},
-			},
+	rewrites := []types.FileRewrite{{
+		File: ".env.dist",
+		Replacements: []types.Replacement{
+			{From: "mars", To: "{{.project_name}}"},
+			{From: "Mars API Docs", To: "{{.app_title}}"},
 		},
-	}
+	}}
 	vars := map[string]string{"project_name": "my-project", "app_title": "My API"}
 
-	if err := ApplyRewrites(dir, m, vars); err != nil {
+	if err := Apply(dir, rewrites, vars); err != nil {
 		t.Fatal(err)
 	}
 
@@ -46,42 +45,38 @@ func TestApplyRewrites(t *testing.T) {
 	}
 }
 
-func TestApplyRewritesRequiresVariableValues(t *testing.T) {
+func TestApplyRequiresVariableValues(t *testing.T) {
 	dir := t.TempDir()
 	envDist := filepath.Join(dir, ".env.dist")
 	if err := os.WriteFile(envDist, []byte("APP_TITLE=Fixture\n"), 0o644); err != nil {
 		t.Fatal(err)
 	}
 
-	err := ApplyRewrites(dir, Manifest{
-		Rewrites: []FileRewrite{{
-			File: ".env.dist",
-			Replacements: []Replacement{
-				{From: "Fixture", To: "{{.app_title}}"},
-			},
-		}},
-	}, nil)
+	err := Apply(dir, []types.FileRewrite{{
+		File: ".env.dist",
+		Replacements: []types.Replacement{
+			{From: "Fixture", To: "{{.app_title}}"},
+		},
+	}}, nil)
 	if err == nil {
 		t.Fatal("expected missing variable error")
 	}
-	if !errors.Is(err, ErrMissingVariable) {
+	if !errors.Is(err, apperrors.ErrMissingVariable) {
 		t.Fatalf("error: got %v, want ErrMissingVariable", err)
 	}
 }
 
-func TestApplyRewritesRejectsEscapingPaths(t *testing.T) {
-	err := ApplyRewrites(t.TempDir(), Manifest{
-		Rewrites: []FileRewrite{{
-			File: "../outside",
-			Replacements: []Replacement{
-				{From: "old", To: "new"},
-			},
-		}},
-	}, nil)
+func TestApplyRejectsEscapingPaths(t *testing.T) {
+	err := Apply(t.TempDir(), []types.FileRewrite{{
+		File: "../outside",
+		Replacements: []types.Replacement{
+			{From: "old", To: "new"},
+		},
+	}}, nil)
 	if err == nil {
 		t.Fatal("expected path traversal error")
 	}
-	if !errors.Is(err, ErrUnsafePath) {
+	if !errors.Is(err, apperrors.ErrUnsafePath) {
 		t.Fatalf("error: got %v, want ErrUnsafePath", err)
 	}
 }

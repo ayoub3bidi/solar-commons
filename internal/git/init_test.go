@@ -1,11 +1,12 @@
-package solarcommons
+package git
 
 import (
 	"os"
 	"path/filepath"
 	"testing"
+	"time"
 
-	"github.com/go-git/go-git/v5"
+	gogit "github.com/go-git/go-git/v5"
 )
 
 func TestInitGit(t *testing.T) {
@@ -15,11 +16,11 @@ func TestInitGit(t *testing.T) {
 	}
 
 	const msg = "Initial commit"
-	if err := InitGit(dir, msg); err != nil {
+	if err := InitGit(dir, msg, "sun", "sun@solar", time.Now()); err != nil {
 		t.Fatal(err)
 	}
 
-	repo, err := git.PlainOpen(dir)
+	repo, err := gogit.PlainOpen(dir)
 	if err != nil {
 		t.Fatal(err)
 	}

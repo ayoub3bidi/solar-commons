@@ -1,4 +1,4 @@
-package files
+package rewrite
 
 import (
 	"fmt"
@@ -7,23 +7,15 @@ import (
 	"strings"
 
 	"github.com/ayoub3bidi/solar-commons/internal/apperrors"
+	"github.com/ayoub3bidi/solar-commons/internal/fs"
+	"github.com/ayoub3bidi/solar-commons/internal/types"
 )
 
 var templateVarPattern = regexp.MustCompile(`\{\{\.[A-Za-z_][A-Za-z0-9_]*\}\}`)
 
-type Rewrite struct {
-	File         string
-	Replacements []Replacement
-}
-
-type Replacement struct {
-	From string
-	To   string
-}
-
-func ApplyRewrites(dest string, rewrites []Rewrite, vars map[string]string) error {
+func Apply(dest string, rewrites []types.FileRewrite, vars map[string]string) error {
 	for _, rewrite := range rewrites {
-		path, err := SafeJoin(dest, rewrite.File)
+		path, err := fs.SafeJoin(dest, rewrite.File)
 		if err != nil {
 			return err
 		}

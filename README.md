@@ -124,13 +124,27 @@ The default test suite must stay offline. Networked tests belong behind the `int
 
 ## Architecture
 
-The root package is the only public API surface. Implementation details live under `internal/`:
+The root package is the only public API surface. Public structs are exposed as root aliases, while their canonical definitions and implementation details live under `internal/`:
 
 | Path | Role |
 |------|------|
+| `internal/types/` | Canonical scaffold and manifest structs |
+| `internal/scaffold/` | Full clone, rewrite, prune, and git-init orchestration |
+| `internal/manifest/` | Manifest file loading and YAML parsing |
 | `internal/git/` | go-git clone, strip, and init implementation |
-| `internal/files/` | Safe path handling, rewrites, and pruning |
+| `internal/fs/` | Safe path handling for manifest-controlled paths |
+| `internal/rewrite/` | Literal rewrite engine and variable resolution |
+| `internal/prune/` | Disabled feature path and line pruning |
 | `internal/fixtures/template/` | Local scaffold fixture used by offline E2E tests |
+| `internal/testutil/` | Shared test helpers for fixture repositories |
+
+## Community
+
+See `CONTRIBUTING.md` for development rules, `SECURITY.md` for vulnerability reporting, and `CODE_OF_CONDUCT.md` for community expectations.
+
+## Releases
+
+Library releases are tag-driven. Pushing a `v*` tag runs the release workflow, validates unit, vet, and integration tests, then creates a GitHub Release with generated notes.
 
 ## License
 

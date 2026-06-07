@@ -10,13 +10,21 @@ Keep this module UI-agnostic. Bubble Tea prompts, Cobra commands, template selec
 
 | File | Role |
 |------|------|
-| `clone.go`, `git.go`, `rewrite.go`, `prune.go` | Root package wrappers for the public API |
-| `manifest.go` | Manifest structs, YAML parsing, and validation |
+| `clone.go`, `git.go`, `rewrite.go`, `prune.go`, `manifest.go`, `scaffold.go` | Root package wrappers for the public API |
+| `types.go` | Root type aliases for the public API |
+| `internal/types/` | Canonical scaffold and manifest structs, plus manifest validation |
+| `internal/scaffold/` | Full scaffold orchestration |
+| `internal/manifest/` | Manifest file loading and YAML parsing |
 | `internal/git/` | go-git clone, strip, and init implementation |
-| `internal/files/` | Safe path handling, rewrites, and pruning implementation |
+| `internal/fs/` | Safe path handling |
+| `internal/rewrite/` | Literal rewrites and variable resolution |
+| `internal/prune/` | Disabled feature pruning |
 | `internal/fixtures/template/` | Local scaffold fixture for offline E2E tests |
+| `internal/testutil/` | Shared test helpers |
 | `.github/workflows/ci.yml` | Offline Go test and vet validation |
 | `.github/workflows/integration.yml` | Manual/weekly networked Mars integration validation |
+| `.github/workflows/release.yml` | Tag-based GitHub Release workflow |
+| `api_test.go` | Root facade coverage |
 | `pipeline_test.go` | Networked Mars integration test, gated by the `integration` build tag |
 
 ## Solar Stack Remote Context
@@ -56,6 +64,8 @@ Public sentinel errors are available for `errors.Is`: `ErrInvalidConfig`, `ErrDe
 
 Callers are expected to build a `ScaffoldConfig` first and call `Scaffold`. Primitive helpers remain available for tests and advanced callers. Do not make product or UX decisions inside this package.
 
+The root package must remain the only public import surface. Do not add public subpackages for `sun`; use `internal/` packages and root aliases/wrappers instead.
+
 ## Manifest Rules
 
 `solar.manifest.yaml` is the contract between public templates and `sun`.
@@ -81,6 +91,12 @@ The default test suite must stay offline. Any test that clones GitHub or another
 ```bash
 go test -tags integration -timeout 120s ./...
 ```
+
+Implementation tests should live beside their owning internal packages. Keep only root facade coverage and integration tests at the repository root.
+
+## Releases
+
+Releases are created by pushing `v*` tags. The release workflow runs `go test ./...`, `go vet ./...`, and the Mars integration test before creating a GitHub Release with generated notes. Do not add GoReleaser here unless this repository starts producing binaries.
 
 ## Development Notes
 
