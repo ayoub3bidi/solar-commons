@@ -1,0 +1,24 @@
+id: fixture
+repo: github.com/ayoub3bidi/fixture
+default_ref: v0.1.0
+variables:
+  - name: project_name
+  - name: app_title
+rewrites:
+  - file: .env.dist
+    replacements:
+      - from: "fixture"
+        to: "{{.project_name}}"
+      - from: "Fixture API Docs"
+        to: "{{.app_title}}"
+features:
+  - name: oidc
+    default: false
+    remove_paths:
+      - src/routes/oidc
+      - src/controllers/oidc
+    remove_lines:
+      - file: src/restful_ressources.py
+        pattern: "oidc"
+      - file: .env.dist
+        pattern: "OIDC"
