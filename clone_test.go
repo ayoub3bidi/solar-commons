@@ -59,9 +59,7 @@ func newTaggedFixtureRepo(t *testing.T) string {
 	if _, err := worktree.Add("README.md"); err != nil {
 		t.Fatal(err)
 	}
-	hash, err := worktree.Commit("Initial commit", &git.CommitOptions{
-		Author: &object.Signature{Name: "test", Email: "test@example.com"},
-	})
+	hash, err := worktree.Commit("Initial commit", defaultTestCommitOptions())
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -69,4 +67,10 @@ func newTaggedFixtureRepo(t *testing.T) string {
 		t.Fatal(err)
 	}
 	return dir
+}
+
+func defaultTestCommitOptions() *git.CommitOptions {
+	return &git.CommitOptions{
+		Author: &object.Signature{Name: "test", Email: "test@example.com"},
+	}
 }

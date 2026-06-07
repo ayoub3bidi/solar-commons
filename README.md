@@ -5,7 +5,7 @@ Core Go library powering the [sun](https://github.com/ayoub3bidi/sun) CLI. Handl
 ## Pipeline
 
 ```
-CloneTemplate  →  StripGit  →  ParseManifest  →  ApplyRewrites  →  PruneFeature  →  InitGit
+Scaffold  →  clone  →  strip .git  →  manifest  →  rewrite  →  prune  →  git init
 ```
 
 ## API

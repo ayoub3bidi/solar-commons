@@ -114,3 +114,13 @@ func (m Manifest) Validate() error {
 
 	return nil
 }
+
+// FeatureByName returns the feature with name if it exists in the manifest.
+func (m Manifest) FeatureByName(name string) (Feature, bool) {
+	for _, feature := range m.Features {
+		if feature.Name == name {
+			return feature, true
+		}
+	}
+	return Feature{}, false
+}

@@ -41,6 +41,7 @@ Template manifest readiness:
 The package currently exposes these primitives:
 
 ```go
+Scaffold(config ScaffoldConfig) (ScaffoldResult, error)
 CloneTemplate(repo, ref, dest string) error
 StripGit(dest string) error
 ParseManifest(dest string) (Manifest, error)
