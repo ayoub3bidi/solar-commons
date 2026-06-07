@@ -19,7 +19,7 @@ func TestParseManifest(t *testing.T) {
 	if len(m.Variables) != 2 || m.Variables[0].Name != "project_name" {
 		t.Errorf("Variables: unexpected %+v", m.Variables)
 	}
-	if len(m.Rewrites) != 1 || m.Rewrites[0].File != ".env.dist" {
+	if len(m.Rewrites) != 2 || m.Rewrites[0].File != ".env.dist" {
 		t.Errorf("Rewrites: unexpected %+v", m.Rewrites)
 	}
 	if len(m.Rewrites[0].Replacements) != 2 {

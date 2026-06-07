@@ -1,0 +1,7 @@
+services:
+  fixture_api:
+    image: fixture_api:latest
+    depends_on:
+      - fixture_db
+  fixture_db:
+    image: postgres:16

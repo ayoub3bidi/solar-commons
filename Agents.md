@@ -14,7 +14,7 @@ Keep this module UI-agnostic. Bubble Tea prompts, Cobra commands, template selec
 | `manifest.go` | Manifest structs, YAML parsing, and validation |
 | `internal/git/` | go-git clone, strip, and init implementation |
 | `internal/files/` | Safe path handling, rewrites, and pruning implementation |
-| `internal/fixtures/template/` | Local manifest fixture |
+| `internal/fixtures/template/` | Local scaffold fixture for offline E2E tests |
 | `pipeline_test.go` | Networked Mars integration test, gated by the `integration` build tag |
 
 ## Solar Stack Remote Context

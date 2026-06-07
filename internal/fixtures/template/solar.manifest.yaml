@@ -11,6 +11,12 @@ rewrites:
         to: "{{.project_name}}"
       - from: "Fixture API Docs"
         to: "{{.app_title}}"
+  - file: docker-compose.yml
+    replacements:
+      - from: "fixture_api"
+        to: "{{.project_name}}_api"
+      - from: "fixture_db"
+        to: "{{.project_name}}_db"
 features:
   - name: oidc
     default: false
