@@ -1,4 +1,4 @@
-package solarcommons
+package files
 
 import (
 	"fmt"
@@ -6,7 +6,7 @@ import (
 	"strings"
 )
 
-func safeJoin(root, child string) (string, error) {
+func SafeJoin(root, child string) (string, error) {
 	if child == "" {
 		return "", fmt.Errorf("path must not be empty")
 	}

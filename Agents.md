@@ -10,13 +10,11 @@ Keep this module UI-agnostic. Bubble Tea prompts, Cobra commands, template selec
 
 | File | Role |
 |------|------|
-| `clone.go` | Clone a template tag with go-git and strip `.git` |
+| `clone.go`, `git.go`, `rewrite.go`, `prune.go` | Root package wrappers for the public API |
 | `manifest.go` | Manifest structs, YAML parsing, and validation |
-| `rewrite.go` | Manifest-driven string replacements with `{{.var_name}}` variables |
-| `prune.go` | Remove disabled feature paths and matching lines |
-| `git.go` | Initialize a fresh repository and create the first commit |
-| `path.go` | Safe path joining for manifest-controlled paths |
-| `testdata/fixture-template/` | Local manifest fixture |
+| `internal/git/` | go-git clone, strip, and init implementation |
+| `internal/files/` | Safe path handling, rewrites, and pruning implementation |
+| `internal/fixtures/template/` | Local manifest fixture |
 | `pipeline_test.go` | Networked Mars integration test, gated by the `integration` build tag |
 
 ## Solar Stack Remote Context
