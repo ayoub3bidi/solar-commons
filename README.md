@@ -137,15 +137,3 @@ The root package is the only public API surface. Public structs are exposed as r
 | `internal/prune/` | Disabled feature path and line pruning |
 | `internal/fixtures/template/` | Local scaffold fixture used by offline E2E tests |
 | `internal/testutil/` | Shared test helpers for fixture repositories |
-
-## Community
-
-See `CONTRIBUTING.md` for development rules, `SECURITY.md` for vulnerability reporting, and `CODE_OF_CONDUCT.md` for community expectations.
-
-## Releases
-
-Library releases are tag-driven. Pushing a `v*` tag runs the release workflow, validates unit, vet, and integration tests, then creates a GitHub Release with generated notes.
-
-## License
-
-MIT
