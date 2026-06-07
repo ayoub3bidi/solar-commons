@@ -54,7 +54,7 @@ InitGit(dest, message string) error
 
 Public sentinel errors are available for `errors.Is`: `ErrInvalidConfig`, `ErrDestinationExists`, `ErrInvalidManifest`, `ErrMissingVariable`, `ErrUnknownFeature`, and `ErrUnsafePath`.
 
-Callers are expected to build a config first, then run these operations in order. Do not make generation decisions inside this package.
+Callers are expected to build a `ScaffoldConfig` first and call `Scaffold`. Primitive helpers remain available for tests and advanced callers. Do not make product or UX decisions inside this package.
 
 ## Manifest Rules
 
@@ -85,26 +85,10 @@ go test -tags integration -timeout 120s ./...
 ## Development Notes
 
 - Use `gofmt` after edits.
+- Run `go test ./...` and `go vet ./...` before every commit.
 - Keep errors contextual; callers should be able to report useful CLI failures.
 - Preserve file permissions when rewriting or pruning file contents.
 - Avoid shelling out to `git`; this package uses go-git so `sun` remains self-contained.
 - Do not add Bubble Tea, Cobra, or installer concerns here.
 - Do not embed Mercury, Mars, or Venus-specific logic. Template differences belong in manifests.
 - Be careful with broad string rewrites. The main product risk is incomplete or over-broad manifest replacement coverage.
-
-## Expected Next API Work
-
-Before `sun` consumes this as a serious library, consider adding a higher-level orchestration function around the primitives:
-
-```go
-type ScaffoldConfig struct {
-    Repo          string
-    Ref           string
-    Destination   string
-    Variables     map[string]string
-    DisabledFeatures []string
-    InitialCommit string
-}
-```
-
-That function should stay deterministic and testable so the `sun` TUI can fill config while generation remains pure library behavior.

@@ -1,6 +1,8 @@
 # solar-commons
 
-Core Go library powering the [sun](https://github.com/ayoub3bidi/sun) CLI. Handles the full scaffold pipeline: clone a Solar template at a pinned ref, apply variable rewrites, prune optional features, and initialise a clean git history.
+Core Go library powering the planned [`sun`](https://github.com/ayoub3bidi/sun) CLI. It handles Solar template scaffolding: clone a pinned template ref, strip source git history, parse `solar.manifest.yaml`, apply variable rewrites, prune disabled features, and initialize a clean git repository.
+
+`solar-commons` is intentionally UI-agnostic. CLI prompts, Bubble Tea flows, template registry decisions, install scripts, and user-facing labels belong in `sun`.
 
 ## Pipeline
 
@@ -13,26 +15,53 @@ Scaffold  →  clone  →  strip .git  →  manifest  →  rewrite  →  prune  
 ```go
 import sc "github.com/ayoub3bidi/solar-commons"
 
-// Clone a template at a semver tag and strip its git history
-sc.CloneTemplate("https://github.com/ayoub3bidi/mars", "v0.1.1", "./my-api")
-sc.StripGit("./my-api")
-
-// Read the template's manifest
-m, _ := sc.ParseManifest("./my-api")
-
-// Substitute variables (resolves {{.var_name}} tokens)
-sc.ApplyRewrites("./my-api", m, map[string]string{
-    "project_name": "my-api",
-    "app_title":    "My API",
-    "api_version":  "v1",
+result, err := sc.Scaffold(sc.ScaffoldConfig{
+    Repo:        "https://github.com/ayoub3bidi/mars",
+    Ref:         "v0.1.1",
+    Destination: "./my-api",
+    Variables: map[string]string{
+        "project_name": "my-api",
+        "app_title":    "My API",
+        "api_version":  "v1",
+    },
+    DisabledFeatures: []string{"oidc"},
+    InitialCommit:    "Initial commit",
+    Author: sc.GitAuthor{
+        Name:  "sun",
+        Email: "sun@solar",
+    },
 })
-
-// Remove an optional feature (paths + import lines)
-sc.PruneFeature("./my-api", m.Features[0])
-
-// Fresh single-commit repo
-sc.InitGit("./my-api", "Initial commit")
+if err != nil {
+    // handle error
+}
+_ = result
 ```
+
+Primitive helpers are still exposed for focused tests and advanced callers:
+
+```go
+CloneTemplate(repo, ref, dest string) error
+StripGit(dest string) error
+ParseManifest(dest string) (Manifest, error)
+ApplyRewrites(dest string, manifest Manifest, vars map[string]string) error
+PruneFeature(dest string, feature Feature) error
+InitGit(dest, message string) error
+```
+
+Use `Scaffold` as the canonical API for `sun`.
+
+## Errors
+
+Public sentinel errors are available for `errors.Is`:
+
+| Error | Meaning |
+|-------|---------|
+| `ErrInvalidConfig` | Required scaffold config is missing |
+| `ErrDestinationExists` | Destination already exists |
+| `ErrInvalidManifest` | Manifest is missing, malformed, or invalid |
+| `ErrMissingVariable` | A rewrite references a variable not provided by the caller |
+| `ErrUnknownFeature` | Caller asked to disable a feature not declared in the manifest |
+| `ErrUnsafePath` | Manifest-controlled path is absolute or escapes the destination root |
 
 ## Manifest format
 
@@ -62,6 +91,16 @@ features:
         pattern: "oidc"
 ```
 
+Manifest rules:
+
+- `id`, `repo`, and `default_ref` are required.
+- `default_ref` should pin a stable semver tag for end-user scaffolds.
+- Variables and features must have unique, non-empty names.
+- Rewrites are literal string replacements, not regexes.
+- Replacement values can reference variables with `{{.project_name}}` syntax.
+- Missing variable values fail fast.
+- Manifest-controlled paths must be relative and stay inside the destination root.
+
 ## Templates
 
 | ID | Repo | Stack |
@@ -73,12 +112,25 @@ features:
 ## Testing
 
 ```bash
-# Unit tests
+# Offline unit and local E2E tests
 go test ./...
+go vet ./...
 
-# Full pipeline integration test (clones Mars v0.1.1 from GitHub)
+# Networked integration test against Mars v0.1.1
 go test -tags integration -timeout 120s ./...
 ```
+
+The default test suite must stay offline. Networked tests belong behind the `integration` build tag.
+
+## Architecture
+
+The root package is the only public API surface. Implementation details live under `internal/`:
+
+| Path | Role |
+|------|------|
+| `internal/git/` | go-git clone, strip, and init implementation |
+| `internal/files/` | Safe path handling, rewrites, and pruning |
+| `internal/fixtures/template/` | Local scaffold fixture used by offline E2E tests |
 
 ## License
 
