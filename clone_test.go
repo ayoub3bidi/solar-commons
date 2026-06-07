@@ -4,6 +4,9 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
+
+	"github.com/go-git/go-git/v5"
+	"github.com/go-git/go-git/v5/plumbing/object"
 )
 
 func TestStripGit(t *testing.T) {
@@ -20,10 +23,10 @@ func TestStripGit(t *testing.T) {
 }
 
 func TestCloneTemplate(t *testing.T) {
-	// Use a small, stable public repo + known tag.
-	// go-git itself: tiny, always available, tag v5.0.0 exists.
+	source := newTaggedFixtureRepo(t)
 	dest := t.TempDir()
-	if err := CloneTemplate("https://github.com/go-git/go-git", "v5.0.0", dest); err != nil {
+
+	if err := CloneTemplate(source, "v0.1.0", dest); err != nil {
 		t.Fatalf("CloneTemplate: %v", err)
 	}
 	if _, err := os.Stat(filepath.Join(dest, ".git")); os.IsNotExist(err) {
@@ -36,4 +39,34 @@ func TestCloneTemplate(t *testing.T) {
 	if _, err := os.Stat(filepath.Join(dest, ".git")); !os.IsNotExist(err) {
 		t.Fatal(".git should be gone after StripGit")
 	}
+}
+
+func newTaggedFixtureRepo(t *testing.T) string {
+	t.Helper()
+
+	dir := t.TempDir()
+	repo, err := git.PlainInit(dir, false)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(dir, "README.md"), []byte("fixture\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	worktree, err := repo.Worktree()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := worktree.Add("README.md"); err != nil {
+		t.Fatal(err)
+	}
+	hash, err := worktree.Commit("Initial commit", &git.CommitOptions{
+		Author: &object.Signature{Name: "test", Email: "test@example.com"},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := repo.CreateTag("v0.1.0", hash, nil); err != nil {
+		t.Fatal(err)
+	}
+	return dir
 }

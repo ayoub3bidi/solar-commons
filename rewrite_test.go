@@ -44,3 +44,37 @@ func TestApplyRewrites(t *testing.T) {
 		t.Errorf("expected 'My API' in output, got:\n%s", got)
 	}
 }
+
+func TestApplyRewritesRequiresVariableValues(t *testing.T) {
+	dir := t.TempDir()
+	envDist := filepath.Join(dir, ".env.dist")
+	if err := os.WriteFile(envDist, []byte("APP_TITLE=Fixture\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	err := ApplyRewrites(dir, Manifest{
+		Rewrites: []FileRewrite{{
+			File: ".env.dist",
+			Replacements: []Replacement{
+				{From: "Fixture", To: "{{.app_title}}"},
+			},
+		}},
+	}, nil)
+	if err == nil {
+		t.Fatal("expected missing variable error")
+	}
+}
+
+func TestApplyRewritesRejectsEscapingPaths(t *testing.T) {
+	err := ApplyRewrites(t.TempDir(), Manifest{
+		Rewrites: []FileRewrite{{
+			File: "../outside",
+			Replacements: []Replacement{
+				{From: "old", To: "new"},
+			},
+		}},
+	}, nil)
+	if err == nil {
+		t.Fatal("expected path traversal error")
+	}
+}

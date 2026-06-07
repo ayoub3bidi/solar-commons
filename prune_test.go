@@ -56,3 +56,13 @@ func TestPruneFeature(t *testing.T) {
 		t.Errorf("expected normal lines to remain, got:\n%s", got)
 	}
 }
+
+func TestPruneFeatureRejectsEscapingPaths(t *testing.T) {
+	err := PruneFeature(t.TempDir(), Feature{
+		Name:        "unsafe",
+		RemovePaths: []string{"../outside"},
+	})
+	if err == nil {
+		t.Fatal("expected path traversal error")
+	}
+}
