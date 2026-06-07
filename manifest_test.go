@@ -5,7 +5,7 @@ import (
 )
 
 func TestParseManifest(t *testing.T) {
-	m, err := ParseManifest("testdata")
+	m, err := ParseManifest("testdata/fixture-template")
 	if err != nil {
 		t.Fatal(err)
 	}
