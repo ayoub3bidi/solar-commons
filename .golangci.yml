@@ -3,5 +3,5 @@ linters:
     - errcheck
     - govet
     - staticcheck
-    - deadcode
+    - unused
   disable-all: true
