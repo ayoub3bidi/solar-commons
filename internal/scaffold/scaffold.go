@@ -26,7 +26,12 @@ func Run(config types.ScaffoldConfig) (types.ScaffoldResult, error) {
 		return types.ScaffoldResult{}, err
 	}
 	if _, err := os.Stat(config.Destination); err == nil {
-		return types.ScaffoldResult{}, fmt.Errorf("%w: %s", apperrors.ErrDestinationExists, config.Destination)
+		if !config.Force {
+			return types.ScaffoldResult{}, fmt.Errorf("%w: %s", apperrors.ErrDestinationExists, config.Destination)
+		}
+		if err := os.RemoveAll(config.Destination); err != nil {
+			return types.ScaffoldResult{}, fmt.Errorf("remove existing destination %s: %w", config.Destination, err)
+		}
 	} else if !os.IsNotExist(err) {
 		return types.ScaffoldResult{}, fmt.Errorf("check destination %s: %w", config.Destination, err)
 	}

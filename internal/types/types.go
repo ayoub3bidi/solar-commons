@@ -14,6 +14,7 @@ type ScaffoldConfig struct {
 	DisabledFeatures []string
 	InitialCommit    string
 	Author           GitAuthor
+	Force            bool
 }
 
 type GitAuthor struct {

@@ -100,6 +100,45 @@ func TestRun(t *testing.T) {
 	}
 }
 
+func TestRunForceFlag(t *testing.T) {
+	source := testutil.NewScaffoldFixtureRepo(t)
+	dest := filepath.Join(t.TempDir(), "my-api")
+
+	// First scaffold
+	_, err := Run(types.ScaffoldConfig{
+		Repo:        source,
+		Ref:         "v0.1.0",
+		Destination: dest,
+		Variables:   map[string]string{"project_name": "my-api", "app_title": "My API"},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// Without Force should fail
+	_, err = Run(types.ScaffoldConfig{
+		Repo:        source,
+		Ref:         "v0.1.0",
+		Destination: dest,
+		Variables:   map[string]string{"project_name": "my-api", "app_title": "My API"},
+	})
+	if !errors.Is(err, apperrors.ErrDestinationExists) {
+		t.Fatalf("expected ErrDestinationExists, got %v", err)
+	}
+
+	// With Force should succeed
+	_, err = Run(types.ScaffoldConfig{
+		Repo:        source,
+		Ref:         "v0.1.0",
+		Destination: dest,
+		Variables:   map[string]string{"project_name": "my-api", "app_title": "My API"},
+		Force:       true,
+	})
+	if err != nil {
+		t.Fatalf("Force: %v", err)
+	}
+}
+
 func TestRunRejectsExistingDestination(t *testing.T) {
 	dest := t.TempDir()
 	_, err := Run(types.ScaffoldConfig{
