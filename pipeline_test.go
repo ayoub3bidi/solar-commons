@@ -12,50 +12,25 @@ import (
 )
 
 func TestFullPipeline(t *testing.T) {
-	dest := t.TempDir()
+	dest := filepath.Join(t.TempDir(), "my-api")
 
-	// 1. Clone Mars at the pinned tag
-	if err := CloneTemplate("https://github.com/ayoub3bidi/mars", "v0.1.1", dest); err != nil {
-		t.Fatalf("CloneTemplate: %v", err)
-	}
-	if err := StripGit(dest); err != nil {
-		t.Fatalf("StripGit: %v", err)
-	}
-
-	// 2. Parse manifest
-	m, err := ParseManifest(dest)
+	result, err := Scaffold(ScaffoldConfig{
+		Repo:        "https://github.com/ayoub3bidi/mars",
+		Ref:         "v0.1.3",
+		Destination: dest,
+		Variables: map[string]string{
+			"project_name": "my-api",
+			"app_title":    "My API",
+			"api_version":  "v1",
+		},
+		DisabledFeatures: []string{"oidc"},
+		InitialCommit:    "Initial commit",
+	})
 	if err != nil {
-		t.Fatalf("ParseManifest: %v", err)
+		t.Fatalf("Scaffold: %v", err)
 	}
-	if m.ID != "mars" {
-		t.Fatalf("unexpected manifest ID: %q", m.ID)
-	}
-
-	// 3. Apply rewrites
-	vars := map[string]string{
-		"project_name": "my-api",
-		"app_title":    "My API",
-		"api_version":  "v1",
-	}
-	if err := ApplyRewrites(dest, m, vars); err != nil {
-		t.Fatalf("ApplyRewrites: %v", err)
-	}
-
-	// 4. Prune OIDC feature
-	var oidcFeature Feature
-	for _, f := range m.Features {
-		if f.Name == "oidc" {
-			oidcFeature = f
-			break
-		}
-	}
-	if err := PruneFeature(dest, oidcFeature); err != nil {
-		t.Fatalf("PruneFeature: %v", err)
-	}
-
-	// 5. Git init
-	if err := InitGit(dest, "Initial commit"); err != nil {
-		t.Fatalf("InitGit: %v", err)
+	if result.TemplateID != "mars" {
+		t.Fatalf("TemplateID: got %q, want %q", result.TemplateID, "mars")
 	}
 
 	// --- Assertions ---
@@ -78,9 +53,28 @@ func TestFullPipeline(t *testing.T) {
 		t.Errorf(".env.dist still contains OIDC/GOOGLE_ vars:\n%s", envStr)
 	}
 
-	// OIDC path must be gone
-	if _, err := os.Stat(filepath.Join(dest, "src", "routes", "oidc")); !os.IsNotExist(err) {
-		t.Error("src/routes/oidc should have been removed")
+	// docker-compose.yml must not contain "mars" service names
+	composeData, err := os.ReadFile(filepath.Join(dest, "docker-compose.yml"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	composeStr := string(composeData)
+	if strings.Contains(composeStr, "marsdb") || strings.Contains(composeStr, "mars_cache") {
+		t.Errorf("docker-compose.yml still contains unrewritten mars service names:\n%s", composeStr)
+	}
+	if !strings.Contains(composeStr, "my-api") {
+		t.Errorf("docker-compose.yml missing 'my-api':\n%s", composeStr)
+	}
+
+	// OIDC paths must be gone
+	for _, path := range []string{
+		filepath.Join("src", "routes", "oidc"),
+		filepath.Join("src", "controllers", "oidc"),
+		filepath.Join("src", "utils", "oidc.py"),
+	} {
+		if _, err := os.Stat(filepath.Join(dest, path)); !os.IsNotExist(err) {
+			t.Errorf("%s should have been removed by OIDC prune", path)
+		}
 	}
 
 	// Git repo must have exactly one commit
@@ -99,7 +93,6 @@ func TestFullPipeline(t *testing.T) {
 	if commit.Message != "Initial commit" {
 		t.Errorf("commit message: got %q", commit.Message)
 	}
-	// Ensure there's no parent (single commit)
 	if len(commit.ParentHashes) != 0 {
 		t.Errorf("expected 0 parents, got %d", len(commit.ParentHashes))
 	}
