@@ -66,6 +66,44 @@ func TestApplyRequiresVariableValues(t *testing.T) {
 	}
 }
 
+// TestApplySubstringOrdering documents that when two From values are substrings
+// of each other, the more-specific (longer) match must be listed first.
+// strings.ReplaceAll applies replacements sequentially, so "mars" before "marsdb"
+// would consume "mars" inside "marsdb" first, leaving the second rule with nothing
+// to match. This test makes that contract explicit and catches manifest ordering bugs.
+func TestApplySubstringOrdering(t *testing.T) {
+	dir := t.TempDir()
+	f := filepath.Join(dir, "docker-compose.yml")
+	if err := os.WriteFile(f, []byte("marsdb:\nvolumes:\n  marsdb:\nmars_api:\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	rewrites := []types.FileRewrite{{
+		File: "docker-compose.yml",
+		Replacements: []types.Replacement{
+			{From: "marsdb", To: "{{.project_name}}db"},
+			{From: "mars", To: "{{.project_name}}"},
+		},
+	}}
+	vars := map[string]string{"project_name": "my-project"}
+
+	if err := Apply(dir, rewrites, vars); err != nil {
+		t.Fatal(err)
+	}
+
+	data, _ := os.ReadFile(f)
+	got := string(data)
+	if strings.Contains(got, "mars") {
+		t.Errorf("expected no 'mars' in output, got:\n%s", got)
+	}
+	if !strings.Contains(got, "my-projectdb") {
+		t.Errorf("expected 'my-projectdb' (volume rename), got:\n%s", got)
+	}
+	if !strings.Contains(got, "my-project_api") {
+		t.Errorf("expected 'my-project_api' (service rename), got:\n%s", got)
+	}
+}
+
 func TestApplyRejectsEscapingPaths(t *testing.T) {
 	err := Apply(t.TempDir(), []types.FileRewrite{{
 		File: "../outside",
