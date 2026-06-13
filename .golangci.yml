@@ -1,9 +1,9 @@
 version: "2"
 
 linters:
+  default: none
   enable:
     - errcheck
     - govet
     - staticcheck
     - unused
-  disable-all: true
