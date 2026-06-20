@@ -2,7 +2,7 @@
 
 Core Go library powering the [`sun`](https://github.com/ayoub3bidi/sun) CLI. It handles Solar template scaffolding: clone a pinned template ref, strip source git history, parse `solar.manifest.yaml`, apply variable rewrites, prune disabled features, and initialize a clean git repository.
 
-> **Solar Stack** — see [docs/SOLAR_STACK.md](./docs/SOLAR_STACK.md) for the full ecosystem.
+> **Solar Stack** — see the [ecosystem map](https://github.com/ayoub3bidi/sun/blob/v1.0.0/docs/SOLAR_STACK.md) in the `sun` repo.
 
 `solar-commons` is intentionally UI-agnostic. CLI prompts, Bubble Tea flows, template registry decisions, install scripts, and user-facing labels belong in `sun`.
 
