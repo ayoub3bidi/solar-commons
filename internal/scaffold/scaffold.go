@@ -3,6 +3,7 @@ package scaffold
 import (
 	"fmt"
 	"os"
+	"path/filepath"
 	"time"
 
 	"github.com/ayoub3bidi/solar-commons/internal/apperrors"
@@ -46,6 +47,10 @@ func Run(config types.ScaffoldConfig) (types.ScaffoldResult, error) {
 	m, err := manifest.Parse(config.Destination)
 	if err != nil {
 		return types.ScaffoldResult{}, err
+	}
+	manifestPath := filepath.Join(config.Destination, "solar.manifest.yaml")
+	if err := os.Remove(manifestPath); err != nil && !os.IsNotExist(err) {
+		return types.ScaffoldResult{}, fmt.Errorf("remove template manifest: %w", err)
 	}
 	if err := rewrite.Apply(config.Destination, m.Rewrites, config.Variables); err != nil {
 		return types.ScaffoldResult{}, err

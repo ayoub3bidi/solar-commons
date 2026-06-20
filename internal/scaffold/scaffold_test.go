@@ -79,6 +79,9 @@ func TestRun(t *testing.T) {
 	if _, err := os.Stat(filepath.Join(dest, ".git")); err != nil {
 		t.Fatal(".git should exist after Run")
 	}
+	if _, err := os.Stat(filepath.Join(dest, "solar.manifest.yaml")); !os.IsNotExist(err) {
+		t.Fatal("solar.manifest.yaml should be removed from scaffold output")
+	}
 
 	repo, err := git.PlainOpen(dest)
 	if err != nil {

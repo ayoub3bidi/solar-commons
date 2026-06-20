@@ -33,17 +33,15 @@ Known GitHub repositories:
 
 | Repo | Visibility | Role | Latest public release |
 |------|------------|------|-----------------------|
-| `ayoub3bidi/mars` | Public | FastAPI + Alembic template, default API path | `v0.1.1` |
-| `ayoub3bidi/mercury` | Public | FastAPI + Flyway template, alternative API path | `v0.4.0` |
-| `ayoub3bidi/venus` | Public | Docusaurus + Tailwind docs template | `v1.1.1` |
-| `ayoub3bidi/solar-commons` | Private | Go scaffold engine consumed by `sun` | none yet |
-
-Mars was derived from Mercury, so local Mars checkouts can contain stale Mercury tags such as `v0.4.0`. Trust `git ls-remote --tags origin` or GitHub releases when choosing `default_ref`; Mars' current public release line is `v0.1.x`.
+| `ayoub3bidi/mars` | Public | FastAPI + Alembic template, default API path | `v0.1.3` |
+| `ayoub3bidi/mercury` | Public | FastAPI + Flyway template, alternative API path | `v0.4.0` (+ manifest in next tag) |
+| `ayoub3bidi/venus` | Public | Docusaurus + Tailwind docs template | `v1.1.1` (+ manifest in next tag) |
+| `ayoub3bidi/solar-commons` | Private → public at v0.2.0 | Go scaffold engine consumed by `sun` | pending |
 
 Template manifest readiness:
 
-- Mars has `solar.manifest.yaml` and is the first integration target.
-- Mercury and Venus still need `solar.manifest.yaml` before `sun` should expose them.
+- Mars, Mercury, and Venus have `solar.manifest.yaml` in repo; integration tests pin semver tags.
+- Scaffold output removes `solar.manifest.yaml` from the user's project after parse.
 - Keep end-user scaffolds pinned to public release tags, not `main`.
 
 ## Public Contract

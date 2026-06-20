@@ -11,12 +11,57 @@ import (
 	"github.com/go-git/go-git/v5"
 )
 
-func TestFullPipeline(t *testing.T) {
+func assertFileNoPlanet(t *testing.T, dest, rel, planet string) {
+	t.Helper()
+	path := filepath.Join(dest, rel)
+	data, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatalf("read %s: %v", rel, err)
+	}
+	if strings.Contains(string(data), planet) {
+		t.Errorf("%s still contains %q", rel, planet)
+	}
+}
+
+func assertSingleCommit(t *testing.T, dest, message string) {
+	t.Helper()
+	repo, err := git.PlainOpen(dest)
+	if err != nil {
+		t.Fatalf("PlainOpen: %v", err)
+	}
+	ref, err := repo.Head()
+	if err != nil {
+		t.Fatal(err)
+	}
+	commit, err := repo.CommitObject(ref.Hash())
+	if err != nil {
+		t.Fatal(err)
+	}
+	if commit.Message != message {
+		t.Errorf("commit message: got %q", commit.Message)
+	}
+	if len(commit.ParentHashes) != 0 {
+		t.Errorf("expected 0 parents, got %d", len(commit.ParentHashes))
+	}
+}
+
+func assertAPIRuntimeRewritten(t *testing.T, dest, planet string) {
+	t.Helper()
+	for _, rel := range []string{
+		".env.dist",
+		"docker-compose.yml",
+		"src/constants/settings.py",
+	} {
+		assertFileNoPlanet(t, dest, rel, planet)
+	}
+}
+
+func TestFullPipelineMars(t *testing.T) {
 	dest := filepath.Join(t.TempDir(), "my-api")
 
 	result, err := Scaffold(ScaffoldConfig{
 		Repo:        "https://github.com/ayoub3bidi/mars",
-		Ref:         "v0.1.3",
+		Ref:         "v0.1.4",
 		Destination: dest,
 		Variables: map[string]string{
 			"project_name": "my-api",
@@ -33,67 +78,87 @@ func TestFullPipeline(t *testing.T) {
 		t.Fatalf("TemplateID: got %q, want %q", result.TemplateID, "mars")
 	}
 
-	// --- Assertions ---
-
-	// .env.dist must not contain "mars" (case-sensitive project-name references)
-	envData, err := os.ReadFile(filepath.Join(dest, ".env.dist"))
+	envStr, err := os.ReadFile(filepath.Join(dest, ".env.dist"))
 	if err != nil {
 		t.Fatal(err)
 	}
-	envStr := string(envData)
-	if strings.Contains(envStr, "mars") {
-		t.Errorf(".env.dist still contains 'mars':\n%s", envStr)
-	}
-	if !strings.Contains(envStr, "my-api") {
-		t.Errorf(".env.dist missing 'my-api':\n%s", envStr)
+	if strings.Contains(string(envStr), "OIDC") || strings.Contains(string(envStr), "GOOGLE_") {
+		t.Errorf(".env.dist still contains OIDC vars")
 	}
 
-	// OIDC env vars must be gone
-	if strings.Contains(envStr, "OIDC") || strings.Contains(envStr, "GOOGLE_") {
-		t.Errorf(".env.dist still contains OIDC/GOOGLE_ vars:\n%s", envStr)
-	}
-
-	// docker-compose.yml must not contain "mars" service names
-	composeData, err := os.ReadFile(filepath.Join(dest, "docker-compose.yml"))
-	if err != nil {
-		t.Fatal(err)
-	}
-	composeStr := string(composeData)
-	if strings.Contains(composeStr, "marsdb") || strings.Contains(composeStr, "mars_cache") {
-		t.Errorf("docker-compose.yml still contains unrewritten mars service names:\n%s", composeStr)
-	}
-	if !strings.Contains(composeStr, "my-api") {
-		t.Errorf("docker-compose.yml missing 'my-api':\n%s", composeStr)
-	}
-
-	// OIDC paths must be gone
 	for _, path := range []string{
 		filepath.Join("src", "routes", "oidc"),
 		filepath.Join("src", "controllers", "oidc"),
 		filepath.Join("src", "utils", "oidc.py"),
 	} {
 		if _, err := os.Stat(filepath.Join(dest, path)); !os.IsNotExist(err) {
-			t.Errorf("%s should have been removed by OIDC prune", path)
+			t.Errorf("%s should have been removed", path)
 		}
 	}
 
-	// Git repo must have exactly one commit
-	repo, err := git.PlainOpen(dest)
+	if _, err := os.Stat(filepath.Join(dest, "solar.manifest.yaml")); !os.IsNotExist(err) {
+		t.Error("solar.manifest.yaml should be removed from scaffold output")
+	}
+
+	assertAPIRuntimeRewritten(t, dest, "mars")
+	assertSingleCommit(t, dest, "Initial commit")
+}
+
+func TestFullPipelineMercury(t *testing.T) {
+	dest := filepath.Join(t.TempDir(), "my-flyway-api")
+
+	result, err := Scaffold(ScaffoldConfig{
+		Repo:        "https://github.com/ayoub3bidi/mercury",
+		Ref:         "v0.4.1",
+		Destination: dest,
+		Variables: map[string]string{
+			"project_name": "my-flyway-api",
+			"app_title":    "My Flyway API",
+			"api_version":  "v1",
+		},
+		DisabledFeatures: []string{"oidc"},
+		InitialCommit:    "Initial commit",
+	})
 	if err != nil {
-		t.Fatalf("PlainOpen: %v", err)
+		t.Fatalf("Scaffold: %v", err)
 	}
-	ref, err := repo.Head()
+	if result.TemplateID != "mercury" {
+		t.Fatalf("TemplateID: got %q, want %q", result.TemplateID, "mercury")
+	}
+
+	assertAPIRuntimeRewritten(t, dest, "mercury")
+	assertSingleCommit(t, dest, "Initial commit")
+}
+
+func TestFullPipelineVenus(t *testing.T) {
+	dest := filepath.Join(t.TempDir(), "my-docs")
+
+	result, err := Scaffold(ScaffoldConfig{
+		Repo:        "https://github.com/ayoub3bidi/venus",
+		Ref:         "v1.1.2",
+		Destination: dest,
+		Variables: map[string]string{
+			"project_name": "my-docs",
+			"site_title":   "My Docs",
+		},
+		DisabledFeatures: []string{"i18n", "search"},
+		InitialCommit:    "Initial commit",
+	})
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Scaffold: %v", err)
 	}
-	commit, err := repo.CommitObject(ref.Hash())
-	if err != nil {
-		t.Fatal(err)
+	if result.TemplateID != "venus" {
+		t.Fatalf("TemplateID: got %q, want %q", result.TemplateID, "venus")
 	}
-	if commit.Message != "Initial commit" {
-		t.Errorf("commit message: got %q", commit.Message)
+
+	if _, err := os.Stat(filepath.Join(dest, "i18n", "fr")); !os.IsNotExist(err) {
+		t.Error("i18n/fr should be removed")
 	}
-	if len(commit.ParentHashes) != 0 {
-		t.Errorf("expected 0 parents, got %d", len(commit.ParentHashes))
+	if _, err := os.Stat(filepath.Join(dest, "src", "plugins", "local-search.cjs")); !os.IsNotExist(err) {
+		t.Error("local-search plugin should be removed when search disabled")
 	}
+
+	assertFileNoPlanet(t, dest, "package.json", "venus")
+	assertFileNoPlanet(t, dest, "docusaurus.config.ts", "venus")
+	assertSingleCommit(t, dest, "Initial commit")
 }
