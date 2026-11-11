@@ -61,7 +61,7 @@ func TestFullPipelineMars(t *testing.T) {
 
 	result, err := Scaffold(ScaffoldConfig{
 		Repo:        "https://github.com/ayoub3bidi/mars",
-		Ref:         "v0.1.4",
+		Ref:         "v0.1.5",
 		Destination: dest,
 		Variables: map[string]string{
 			"project_name": "my-api",
@@ -109,7 +109,7 @@ func TestFullPipelineMercury(t *testing.T) {
 
 	result, err := Scaffold(ScaffoldConfig{
 		Repo:        "https://github.com/ayoub3bidi/mercury",
-		Ref:         "v0.4.1",
+		Ref:         "v0.4.2",
 		Destination: dest,
 		Variables: map[string]string{
 			"project_name": "my-flyway-api",

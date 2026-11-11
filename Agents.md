@@ -22,10 +22,10 @@ Keep this module UI-agnostic. Bubble Tea prompts, Cobra commands, template selec
 | `internal/fixtures/template/` | Local scaffold fixture for offline E2E tests |
 | `internal/testutil/` | Shared test helpers |
 | `.github/workflows/ci.yml` | Offline Go test and vet validation |
-| `.github/workflows/integration.yml` | Manual/weekly networked Mars integration validation |
+| `.github/workflows/integration.yml` | Manual/weekly networked template integration validation |
 | `.github/workflows/release.yml` | Tag-based GitHub Release workflow |
 | `api_test.go` | Root facade coverage |
-| `pipeline_test.go` | Networked Mars integration test, gated by the `integration` build tag |
+| `pipeline_test.go` | Networked Mars, Mercury, and Venus scaffold tests, gated by the `integration` build tag |
 
 ## Solar Stack Remote Context
 
@@ -33,9 +33,9 @@ Known GitHub repositories:
 
 | Repo | Visibility | Role | Latest public release |
 |------|------------|------|-----------------------|
-| `ayoub3bidi/mars` | Public | FastAPI + Alembic template, default API path | `v0.1.3` |
-| `ayoub3bidi/mercury` | Public | FastAPI + Flyway template, alternative API path | `v0.4.0` (+ manifest in next tag) |
-| `ayoub3bidi/venus` | Public | Docusaurus + Tailwind docs template | `v1.1.1` (+ manifest in next tag) |
+| `ayoub3bidi/mars` | Public | FastAPI + Alembic template, default API path | `v0.1.5` |
+| `ayoub3bidi/mercury` | Public | FastAPI + Flyway template, alternative API path | `v0.4.2` |
+| `ayoub3bidi/venus` | Public | Docusaurus + Tailwind docs template | `v1.1.2` |
 | `ayoub3bidi/solar-commons` | Private → public at v0.2.0 | Go scaffold engine consumed by `sun` | pending |
 
 Template manifest readiness:
@@ -94,7 +94,7 @@ Implementation tests should live beside their owning internal packages. Keep onl
 
 ## Releases
 
-Releases are created by pushing `v*` tags. The release workflow runs `go test ./...`, `go vet ./...`, and the Mars integration test before creating a GitHub Release with generated notes. Do not add GoReleaser here unless this repository starts producing binaries.
+Releases are created by pushing `v*` tags. The release workflow runs `go test ./...`, `go vet ./...`, and the template integration suite before creating a GitHub Release with generated notes. Do not add GoReleaser here unless this repository starts producing binaries.
 
 ## Development Notes
 

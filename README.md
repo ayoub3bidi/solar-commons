@@ -19,7 +19,7 @@ import sc "github.com/ayoub3bidi/solar-commons"
 
 result, err := sc.Scaffold(sc.ScaffoldConfig{
     Repo:        "https://github.com/ayoub3bidi/mars",
-    Ref:         "v0.1.3",
+    Ref:         "v0.1.5",
     Destination: "./my-api",
     Variables: map[string]string{
         "project_name": "my-api",
@@ -72,7 +72,7 @@ Each Solar template repo carries a `solar.manifest.yaml` at its root:
 ```yaml
 id: mars
 repo: https://github.com/ayoub3bidi/mars
-default_ref: v0.1.3
+default_ref: v0.1.5
 variables:
   - name: project_name
   - name: app_title
@@ -118,8 +118,8 @@ Manifest rules:
 go test ./...
 go vet ./...
 
-# Networked integration test against Mars v0.1.3
-go test -tags integration -timeout 120s ./...
+# Networked integration tests against the pinned Mars, Mercury, and Venus releases
+go test -tags integration -timeout 300s ./...
 ```
 
 The default test suite must stay offline. Networked tests belong behind the `integration` build tag.
